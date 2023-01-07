@@ -45,6 +45,32 @@ function getDepartments() {
   });
 }
 
+function getRoles() {
+  return new Promise(function (success, failure) {
+    const sql = `SELECT * FROM role`;
+
+    db.query(sql, (err, rows) => {
+      if (err) {
+        failure(err.message);
+      }
+      success(rows);
+    });
+  });
+}
+
+function getManagers() {
+  return new Promise(function (success, failure) {
+    const sql = `SELECT first_name, last_name, id FROM employee WHERE manager_id is null`;
+
+    db.query(sql, (err, rows) => {
+      if (err) {
+        failure(err.message);
+      }
+      success(rows);
+    });
+  });
+}
+
 function viewDepartments() {
   getDepartments().then(
     (rows) => {
@@ -70,7 +96,7 @@ function viewRoles() {
 }
 
 function viewEmployees() {
-  const sql = `SELECT employee.id, employee.first_name, employee.last_name, role.title, department.name, role.salary, e2.first_name, e2.last_name
+  const sql = `SELECT employee.id, employee.first_name, employee.last_name, role.title, department.name, role.salary, e2.first_name AS manager_first, e2.last_name AS manager_last
 FROM department
 JOIN role ON department.id = role.department_id
 JOIN employee ON role.id = employee.role_id
@@ -156,6 +182,9 @@ function addRole() {
 }
 
 function addEmployee() {
+  var fName, lName;
+  var roleid = 1;
+  var manid = 1;
   const addEmpl = [
     {
       type: "input",
@@ -170,17 +199,72 @@ function addEmployee() {
   ];
   inquirer.prompt(addEmpl).then((resp) => {
     console.log(resp);
-    const sql = `INSERT INTO employee (first_name, last_name)
-    VALUES (?)`;
-    const params = [resp.name];
+    fName = resp.firstName;
+    lName = resp.lastName;
 
-    db.query(sql, params, (err, result) => {
-      if (err) {
-        console.log(err.message);
-        return;
-      }
-      console.log("Dept created");
-      init();
+    roles = [];
+    getRoles().then((rows) => {
+      console.log(rows);
+      rows.map((d) => {
+        roles.push({
+          name: d.title,
+          value: d.id,
+        });
+      });
+
+      console.log(roles);
+
+      const addR = [
+        {
+          type: "list",
+          message: "Which role is this employee being placed in?",
+          name: "options",
+          choices: roles,
+        },
+      ];
+
+      inquirer.prompt(addR).then((resp) => {
+        console.log(resp);
+        roleid = resp.options;
+
+        managers = [];
+        getManagers().then((rows) => {
+          rows.map((d) => {
+            managers.push({
+              // Concat names into 'name'
+              name: d.first_name + " " + d.last_name,
+              value: d.id,
+            });
+          });
+          console.log(managers);
+
+          const addM = [
+            {
+              type: "list",
+              message: "Which Manager is supervising this new employee?",
+              name: "options",
+              choices: managers,
+            },
+          ];
+
+          inquirer.prompt(addM).then((resp) => {
+            console.log(resp);
+            manid = resp.options;
+
+            const sql = `INSERT INTO employee (first_name, last_name, role_id, manager_id) VALUES (?,?,?,?)`;
+            const params = [fName, lName, roleid, manid];
+
+            db.query(sql, params, (err, result) => {
+              if (err) {
+                console.log(err.message);
+                return;
+              }
+              console.log("Employee created");
+              init();
+            });
+          });
+        });
+      });
     });
   });
 }
