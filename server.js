@@ -32,18 +32,27 @@ const firstOption = [
   },
 ];
 
-function viewDepartments() {
-  const sql = `SELECT * FROM department`;
+function getDepartments() {
+  return new Promise(function (success, failure) {
+    const sql = `SELECT * FROM department`;
 
-  db.query(sql, (err, rows) => {
-    if (err) {
-      res.status(500).json({ error: err.message });
-      return;
-    }
-    console.log(rows);
-    console.log("\n");
-    console.table(rows);
+    db.query(sql, (err, rows) => {
+      if (err) {
+        failure(err.message);
+      }
+      success(rows);
+    });
   });
+}
+
+function viewDepartments() {
+  getDepartments().then(
+    (rows) => {
+      console.log("\n");
+      console.table(rows);
+    },
+    (message) => console.log(message)
+  );
 }
 
 function viewRoles() {
@@ -100,60 +109,68 @@ function addDepartment() {
 }
 
 function addRole() {
-  const addRole = [
-    {
-      type: "input",
-      message: "Name of Role to Add",
-      name: "role",
-    },
-    {
-      type: "input",
-      message: "What is the salary, using numbers only",
-      name: "salary",
-    },
-    {
-      type: "list",
-    message: "What Department does this Role belong to?",
-    name: "options",
-    choices: [
-      "View All Departments",
-      "View All Roles",
-      "View All Employees",
-      "Add a Department",
-      "Add a Role",
-      "Add an Employee",
-      "Update an Employee's Role",
-      "All Done",
-    ],
-    }
-  ];
-  inquirer.prompt(addDept).then((resp) => {
-    console.log(resp);
-    const sql = `INSERT INTO department (name)
-    VALUES (?)`;
-    const params = [resp.name];
+  depts = [];
+  getDepartments().then((rows) => {
+    rows.map((d) => {
+      depts.push({
+        name: d.name,
+        value: d.id,
+      });
+    });
+    console.log(depts);
 
-    db.query(sql, params, (err, result) => {
-      if (err) {
-        console.log(err.message);
-        return;
-      }
-      console.log("Dept created");
-      init();
+    const addRole = [
+      {
+        type: "input",
+        message: "Name of Role to Add",
+        name: "role",
+      },
+      {
+        type: "input",
+        message: "What is the salary, using numbers only",
+        name: "salary",
+      },
+      {
+        type: "list",
+        message: "What Department does this Role belong to?",
+        name: "options",
+        choices: depts,
+      },
+    ];
+    inquirer.prompt(addRole).then((resp) => {
+      console.log(resp);
+      const sql = `INSERT INTO role (title, salary, department_id)
+      VALUES (?,?,?)`;
+      const params = [resp.role, resp.salary, resp.options];
+
+      db.query(sql, params, (err, result) => {
+        if (err) {
+          console.log(err.message);
+          return;
+        }
+        console.log("Role created");
+        init();
+      });
     });
   });
 }
 
 function addEmployee() {
-  const addDept = [
-    { 
-      type: "input", 
-      message: "Name of Department to Add", 
-      name: "name" },
+  const addEmpl = [
+    {
+      type: "input",
+      message: "First Name of New Employee",
+      name: "firstName",
+    },
+    {
+      type: "input",
+      message: "Last Name of New Employee",
+      name: "lastName",
+    },
   ];
-  inquirer.prompt(addDept).then((resp) => {
+  inquirer.prompt(addEmpl).then((resp) => {
     console.log(resp);
-    const sql = `INSERT INTO department (name)
+    const sql = `INSERT INTO employee (first_name, last_name)
     VALUES (?)`;
     const params = [resp.name];
 
@@ -198,15 +215,11 @@ function init() {
 
       case "Add a Role": {
         addRole();
-        const message = "Add Role";
-        console.log(message);
         break;
       }
 
       case "Add an Employee": {
         addEmployee();
-        const message = "Add Employee";
-        console.log(message);
         break;
       }
 
