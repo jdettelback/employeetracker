@@ -26,11 +26,11 @@ The role table has a column for the id number, title, and salary.  The role tabl
 
 The employee table has a column for id number, first name, last name and manager. The employee table also references the id number in the role table and refers to the manager column within itself.
 
+The user can view each of the 3 tables.  The user can also add a department, add a role, or add an employee.  The user can also delete a department, role or employee.  The user can also update a current employee's role.
+
 ## Contact
 Contact me at [jdettelback@gmail.com](mailto:jdettelback@gmail.com) if you have any questions.  You can see more of my work at <https://github.com/jdettelback>.
 
 
-  ![screenshot](https://raw.githubusercontent.com/jdettelback/teamprofile/main/images/teamprofilescreenshot.png)
+  ![screenshot](https://raw.githubusercontent.com/jdettelback/employeetracker/main/images/screenshotemployeetracker.png)
   
-  ![screenshot](https://raw.githubusercontent.com/jdettelback/teamprofile/main/images/teamprofilescreenshot2.png)
-
