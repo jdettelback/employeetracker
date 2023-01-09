@@ -1,8 +1,6 @@
 const inquirer = require("inquirer");
 const mysql = require("mysql2");
-//const db = require("./db");
-//const table = require("console.table");
-const connection = require("./db/connection");
+const table = require("console.table");
 
 const db = mysql.createConnection(
   {
@@ -128,8 +126,7 @@ function addDepartment() {
     name: "name" },
   ];
   inquirer.prompt(addDept).then((resp) => {
-    //console.log(resp);
-    const sql = `INSERT INTO department (name)
+     const sql = `INSERT INTO department (name)
     VALUES (?)`;
     const params = [resp.name];
 
@@ -153,8 +150,7 @@ function addRole() {
         value: d.id,
       });
     });
-    console.log(depts);
-
+  
     const addRole = [
       {
         type: "input",
@@ -174,8 +170,7 @@ function addRole() {
       },
     ];
     inquirer.prompt(addRole).then((resp) => {
-      //console.log(resp);
-      const sql = `INSERT INTO role (title, salary, department_id)
+       const sql = `INSERT INTO role (title, salary, department_id)
       VALUES (?,?,?)`;
       const params = [resp.role, resp.salary, resp.options];
 
@@ -208,21 +203,17 @@ function addEmployee() {
     },
   ];
   inquirer.prompt(addEmpl).then((resp) => {
-    console.log(resp);
     fName = resp.firstName;
     lName = resp.lastName;
 
     roles = [];
     getRoles().then((rows) => {
-      console.log(rows);
       rows.map((d) => {
         roles.push({
           name: d.title,
           value: d.id,
         });
       });
-
-      //console.log(roles);
 
       const addR = [
         {
@@ -234,20 +225,17 @@ function addEmployee() {
       ];
 
       inquirer.prompt(addR).then((resp) => {
-        //console.log(resp);
         roleid = resp.options;
 
         managers = [];
         getManagers().then((rows) => {
           rows.map((d) => {
             managers.push({
-              // Concat names into 'name'
               name: d.first_name + " " + d.last_name,
               value: d.id,
             });
           });
-          console.log(managers);
-
+          
           const addM = [
             {
               type: "list",
@@ -258,7 +246,6 @@ function addEmployee() {
           ];
 
           inquirer.prompt(addM).then((resp) => {
-            console.log(resp);
             manid = resp.options;
 
             const sql = `INSERT INTO employee (first_name, last_name, role_id, manager_id) VALUES (?,?,?,?)`;
@@ -303,19 +290,15 @@ function updateRole() {
 
     inquirer.prompt(chooseEmpl).then((resp) => {
       employId = resp.options;
-      //console.log(resp.options);
 
       roles = [];
       getRoles().then((rows) => {
-        console.log(rows);
         rows.map((d) => {
           roles.push({
             name: d.title,
             value: d.id,
           });
         });
-
-        //console.log(roles);
 
         const addR = [
           {
@@ -327,7 +310,6 @@ function updateRole() {
         ];
 
         inquirer.prompt(addR).then((resp) => {
-          //console.log(resp);
           newRole = resp.options;
 
           const sql = `UPDATE employee SET role_id = ? WHERE employee.id = ?`;
@@ -367,7 +349,6 @@ function removeDepartment() {
     ];
 
     inquirer.prompt(remDept).then((resp) => {
-      //console.log(resp);
       const sql = `DELETE FROM department WHERE id = (?)`;
       const params = [resp.name];
 
@@ -386,7 +367,6 @@ function removeDepartment() {
 function removeRole() {
   roles = [];
   getRoles().then((rows) => {
-    //console.log(rows);
     rows.map((d) => {
       roles.push({
         name: d.title,
@@ -404,7 +384,6 @@ function removeRole() {
     ];
 
     inquirer.prompt(remRole).then((resp) => {
-      //console.log(resp);
       const sql = `DELETE FROM role WHERE id = (?)`;
       const params = [resp.role];
 
@@ -440,7 +419,6 @@ function removeEmployee() {
     ];
 
     inquirer.prompt(remEmployee).then((resp) => {
-      //console.log(resp);
       const sql = `DELETE FROM employee WHERE id = (?)`;
       const params = [resp.name];
 
@@ -458,7 +436,6 @@ function removeEmployee() {
 
 function init() {
   inquirer.prompt(firstOption).then((response) => {
-    //console.log(response);
 
     switch (response.options) {
       case "View All Departments": {
