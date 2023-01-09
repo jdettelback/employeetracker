@@ -27,6 +27,9 @@ const firstOption = [
       "Add a Role",
       "Add an Employee",
       "Update an Employee's Role",
+      "Remove a Department",
+      "Remove a Role",
+      "Remove an Employee",
       "All Done",
     ],
   },
@@ -71,37 +74,6 @@ function getManagers() {
   });
 }
 
-function viewDepartments() {
-  getDepartments().then(
-    (rows) => {
-      console.log("\n");
-      console.table(rows);
-    },
-    (message) => console.log(message)
-  );
-}
-
-function viewRoles() {
-  const sql = `SELECT * FROM role`;
-
-  db.query(sql, (err, rows) => {
-    if (err) {
-      failure(err.message);
-    }
-    success(rows);
-  });
-}
-
-function viewEmployees() {
-  getEmployees().then(
-    (rows) => {
-      console.log("\n");
-      console.table(rows);
-    },
-    (message) => console.log(message)
-  );
-}
-
 function getEmployees() {
   return new Promise(function (success, failure) {
     const sql = `SELECT employee.id, employee.first_name, employee.last_name, role.title, department.name, role.salary, e2.first_name AS manager_first, e2.last_name AS manager_last
@@ -119,12 +91,44 @@ LEFT JOIN employee e2 ON e2.id = employee.manager_id`;
   });
 }
 
+function viewDepartments() {
+  getDepartments().then(
+    (rows) => {
+      console.log("\n");
+      console.table(rows);
+    },
+    (message) => console.log(message)
+  );
+}
+
+function viewRoles() {
+  getRoles().then(
+    (rows) => {
+      console.log('\n');
+      console.table(rows);
+    },
+    (message) => console.log(message)
+  );
+}
+
+function viewEmployees() {
+  getEmployees().then(
+    (rows) => {
+      console.log("\n");
+      console.table(rows);
+    },
+    (message) => console.log(message)
+  );
+}
+
 function addDepartment() {
   const addDept = [
-    { type: "input", message: "Name of Department to Add", name: "name" },
+    { type: "input", 
+    message: "Name of Department to Add", 
+    name: "name" },
   ];
   inquirer.prompt(addDept).then((resp) => {
-    console.log(resp);
+    //console.log(resp);
     const sql = `INSERT INTO department (name)
     VALUES (?)`;
     const params = [resp.name];
@@ -170,7 +174,7 @@ function addRole() {
       },
     ];
     inquirer.prompt(addRole).then((resp) => {
-      console.log(resp);
+      //console.log(resp);
       const sql = `INSERT INTO role (title, salary, department_id)
       VALUES (?,?,?)`;
       const params = [resp.role, resp.salary, resp.options];
@@ -218,7 +222,7 @@ function addEmployee() {
         });
       });
 
-      console.log(roles);
+      //console.log(roles);
 
       const addR = [
         {
@@ -230,7 +234,7 @@ function addEmployee() {
       ];
 
       inquirer.prompt(addR).then((resp) => {
-        console.log(resp);
+        //console.log(resp);
         roleid = resp.options;
 
         managers = [];
@@ -299,7 +303,7 @@ function updateRole() {
 
     inquirer.prompt(chooseEmpl).then((resp) => {
       employId = resp.options;
-      console.log(resp.options);
+      //console.log(resp.options);
 
       roles = [];
       getRoles().then((rows) => {
@@ -311,7 +315,7 @@ function updateRole() {
           });
         });
 
-        console.log(roles);
+        //console.log(roles);
 
         const addR = [
           {
@@ -323,7 +327,7 @@ function updateRole() {
         ];
 
         inquirer.prompt(addR).then((resp) => {
-          console.log(resp);
+          //console.log(resp);
           newRole = resp.options;
 
           const sql = `UPDATE employee SET role_id = ? WHERE employee.id = ?`;
@@ -343,9 +347,118 @@ function updateRole() {
   });
 }
 
+function removeDepartment() {
+  depts = [];
+  getDepartments().then((rows) => {
+    rows.map((d) => {
+      depts.push({
+        name: d.name,
+        value: d.id,
+      });
+    });
+
+    const remDept = [
+      {
+        type: "list",
+        message: "Name of Department to Remove",
+        name: "name",
+        choices: depts,
+      },
+    ];
+
+    inquirer.prompt(remDept).then((resp) => {
+      //console.log(resp);
+      const sql = `DELETE FROM department WHERE id = (?)`;
+      const params = [resp.name];
+
+      db.query(sql, params, (err, result) => {
+        if (err) {
+          console.log(err.message);
+          return;
+        }
+        console.log("Department removed");
+        init();
+      });
+    });
+  });
+}
+
+function removeRole() {
+  roles = [];
+  getRoles().then((rows) => {
+    //console.log(rows);
+    rows.map((d) => {
+      roles.push({
+        name: d.title,
+        value: d.id,
+      });
+    });
+
+    const remRole = [
+      {
+        type: "list",
+        message: "What Role are you removing?",
+        name: "role",
+        choices: roles,
+      },
+    ];
+
+    inquirer.prompt(remRole).then((resp) => {
+      //console.log(resp);
+      const sql = `DELETE FROM role WHERE id = (?)`;
+      const params = [resp.role];
+
+      db.query(sql, params, (err, result) => {
+        if (err) {
+          console.log(err.message);
+          return;
+        }
+        console.log("Role Removed");
+        init();
+      });
+    });
+  });
+}
+
+function removeEmployee() {
+  employee = [];
+  getEmployees().then((rows) => {
+    rows.map((d) => {
+      employee.push({
+        name: d.first_name + " " + d.last_name,
+        value: d.id,
+      });
+    });
+
+    const remEmployee = [
+      {
+        type: "list",
+        message: "Name of employee to remove",
+        name: "name",
+        choices: employee,
+      },
+    ];
+
+    inquirer.prompt(remEmployee).then((resp) => {
+      //console.log(resp);
+      const sql = `DELETE FROM employee WHERE id = (?)`;
+      const params = [resp.name];
+
+      db.query(sql, params, (err, result) => {
+        if (err) {
+          console.log(err.message);
+          return;
+        }
+        console.log("Employee removed");
+        init();
+      });
+    });
+  });
+}
+
 function init() {
   inquirer.prompt(firstOption).then((response) => {
-    console.log(response);
+    //console.log(response);
 
     switch (response.options) {
       case "View All Departments": {
@@ -383,13 +496,27 @@ function init() {
 
       case "Update an Employee's Role": {
         updateRole();
-        const message = "Update Role";
-        console.log(message);
+        break;
+      }
+
+      case "Remove a Department": {
+        removeDepartment();
+        break;
+      }
+
+      case "Remove a Role": {
+        removeRole();
+         break;
+      }
+
+      case "Remove an Employee": {
+        removeEmployee();
         break;
       }
 
       case "All Done": {
-        return;
+        console.log('Have a nice day!');
+        process.exit();
       }
 
       default: {
